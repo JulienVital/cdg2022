@@ -1,0 +1,10 @@
+{
+    "filewatcher.commands": [
+        {
+            "match": "\\app*",
+            "isAsync": false,
+            "cmd": "php ${workspaceRoot}/compile.php",
+            "event": "onFileChange"
+        }        
+    ]
+}
