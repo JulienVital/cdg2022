@@ -26,6 +26,7 @@ class Parser{
         foreach($units as $unit){
             switch ($unit->getType()) {
                 case 0:
+                    $unit->setMyBaseDist(CalcDist::getDist($unit, $game->getMyBase()));
                     $monster[]= $unit;
                     
                     if ($unit->getThreatFor() == 1){
@@ -41,9 +42,11 @@ class Parser{
                     break;
             }
         }
+        
         $game->setMyHeroes($heroes);
         $game->setMonsters($monsters);
         $game->setThreat($threat);
+        // error_log(var_export($game->getThreat(), true));
     }
 
 }  

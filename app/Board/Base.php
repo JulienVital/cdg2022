@@ -66,7 +66,7 @@ class Base {
     /**
      * Get the value of baseX
      */
-    public function getBaseX()
+    public function getX()
     {
         return $this->baseX;
     }
@@ -74,7 +74,7 @@ class Base {
     /**
      * Set the value of baseX
      */
-    public function setBaseX($baseX): self
+    public function setX($baseX): self
     {
         $this->baseX = $baseX;
 
@@ -84,7 +84,7 @@ class Base {
     /**
      * Get the value of baseY
      */
-    public function getBaseY()
+    public function getY()
     {
         return $this->baseY;
     }
@@ -92,7 +92,7 @@ class Base {
     /**
      * Set the value of baseY
      */
-    public function setBaseY($baseY): self
+    public function setY($baseY): self
     {
         $this->baseY = $baseY;
 

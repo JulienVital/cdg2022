@@ -29,17 +29,9 @@ class Game {
 
     }
 
-    public function sortThreat (){
+    public function sortThreat ($threat){
         
-        $threat = $this->threat;
         $customSort = function($monster1, $monster2) {
-            $monster1X = abs($this->myBase->getBaseX() - $monster1->getX() ); //4140
-            $monster1Y = abs($this->myBase->getBaseY() - $monster1->getY() ); //3844
-            $monster1->setMyBaseDist(sqrt($monster1X*$monster1X + $monster1Y*$monster1Y));
-            $monster2X = abs($this->myBase->getBaseX() - $monster2->getX() );
-            $monster2Y = abs($this->myBase->getBaseY() - $monster2->getY() );
-            $monster2Dist = sqrt($monster2X*$monster2X + $monster2Y*$monster2Y);
-            $monster2->setMyBaseDist(sqrt($monster2X*$monster2X + $monster2Y*$monster2Y));
 
             if ($monster1->getMyBaseDist() === $monster2->getMyBaseDist()) {
                 return 0;
@@ -47,8 +39,7 @@ class Game {
             return $monster1->getMyBaseDist() < $monster2->getMyBaseDist() ? -1 : 1;
         };
         usort($threat,$customSort);
-
-        $this->setThreat($threat);
+        return $threat;
     }
 
     public function sortByclosest(){
@@ -160,8 +151,7 @@ class Game {
      */
     public function setThreat($threat): self
     {
-        $this->threat = $threat;
-
+        $this->threat = $this->sortThreat($threat);
         return $this;
     }
 }

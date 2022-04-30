@@ -4,6 +4,7 @@ namespace app;
 use app\Board\Base;
 use app\Game\Game;
 use app\Parser\Data;
+use CalcDist;
 use Unit;
 
 /**
@@ -59,23 +60,27 @@ while (TRUE)
         
     }
     $game->updateGame($data);
-    $game->sortThreat();
     $game->sortByclosest();
     // error_log(var_export($game->getThreat(), true));
     for ($i = 0; $i < $heroesPerPlayer; $i++)
     {
-
+        error_log(var_export($game->getMyHeroes()[0], true));
         // Write an action using echo(). DON'T FORGET THE TRAILING \n
         // To debug: error_log(var_export($var, true)); (equivalent to var_dump)
-        if (!empty($game->getThreat())){
-            echo("MOVE ". $game->getThreat()[0]->getX().' '. $game->getThreat()[0]->getY()."\n");
+        if (!empty($threats = $game->getThreat())){
+            if ($threats[0]->getMyBaseDist()  < 1500 && (CalcDist::getDist($threats[0], $game->getMyHeroes()[0])<1000)){
+                echo("SPELL WIND ". $game->getOpponentBase()->getX().' '. $game->getOpponentBase()->getY()."\n");
+            }else {
+
+                echo("MOVE ". $threats[0]->getX().' '. $threats[0]->getY()."\n");
+            }
+            // error_log(var_export($game->getThreat(), true));
 
         }
 
         else {
             if ($monsters = $game->getMonsters()) {
-                error_log(var_export('no menace', true));
-                echo("MOVE " . $monster[0]->getX() ." ".$monster[0]->getX()."\n");
+                echo("MOVE " . $monsters[0]->getX() ." ".$monsters[0]->getX()."\n");
             }else {
                 $waitSpotX = $game->getMyBase()->getWaitSpotX();
                 $waitSpotY = $game->getMyBase()->getWaitSpotY();
