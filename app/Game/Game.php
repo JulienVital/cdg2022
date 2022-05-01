@@ -11,6 +11,8 @@ class Game {
 
     private $myHeroes;
     
+    private $ennemyHeroes;
+    
     private $monsters;
     
     private $threat;
@@ -42,30 +44,6 @@ class Game {
         return $threat;
     }
 
-    public function sortByclosest(){
-        $monsters = $this->monsters;
-        $customSort = function($monster1, $monster2) {
-            $monster1X = abs($this->myHeroes[0]->getX() - $monster1->getX() ); //4140
-            $monster1Y = abs($this->myHeroes[0]->getY() - $monster1->getY() ); //3844
-            $monster1->setDistMyheroes(sqrt($monster1X*$monster1X + $monster1Y*$monster1Y));
-
-
-            
-            
-            $monster2X = abs($this->myHeroes[0]->getX() - $monster2->getX() );
-            $monster2Y = abs($this->myHeroes[0]->getY() - $monster2->getY() );
-            $monster2Dist = sqrt($monster2X*$monster2X + $monster2Y*$monster2Y);
-            $monster2->setDistMyheroes(sqrt($monster2X*$monster2X + $monster2Y*$monster2Y));
-
-            if ($monster1->getDistMyheroes() === $monster2->getDistMyheroes()) {
-                return 0;
-            }
-            return $monster1->getDistMyheroes() < $monster2->getDistMyheroes() ? -1 : 1;
-        };
-        usort($monsters,$customSort);
-        $this->setMonsters($monsters);
-    }
- 
     /**
      * Get the value of myBase
      */
@@ -152,6 +130,24 @@ class Game {
     public function setThreat($threat): self
     {
         $this->threat = $this->sortThreat($threat);
+        return $this;
+    }
+
+    /**
+     * Get the value of ennemyHeroes
+     */
+    public function getEnnemyHeroes()
+    {
+        return $this->ennemyHeroes;
+    }
+
+    /**
+     * Set the value of ennemyHeroes
+     */
+    public function setEnnemyHeroes($ennemyHeroes): self
+    {
+        $this->ennemyHeroes = $ennemyHeroes;
+
         return $this;
     }
 }

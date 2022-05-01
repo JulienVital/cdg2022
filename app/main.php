@@ -4,7 +4,10 @@ namespace app;
 use app\Board\Base;
 use app\Game\Game;
 use app\Parser\Data;
-use CalcDist;
+use Defend;
+use Strategy\Attack\Attack;
+use Strategy\Defend\CounterPressing;
+use Strategy\MaxMana\MaxMana;
 use Unit;
 
 /**
@@ -60,35 +63,31 @@ while (TRUE)
         
     }
     $game->updateGame($data);
-    $game->sortByclosest();
     // error_log(var_export($game->getThreat(), true));
-    for ($i = 0; $i < $heroesPerPlayer; $i++)
+    $i = 0;
+    foreach ($game->getMyHeroes() as $hero)
     {
-        error_log(var_export($game->getMyHeroes()[0], true));
-        // Write an action using echo(). DON'T FORGET THE TRAILING \n
-        // To debug: error_log(var_export($var, true)); (equivalent to var_dump)
-        if (!empty($threats = $game->getThreat())){
-            if ($threats[0]->getMyBaseDist()  < 1500 && (CalcDist::getDist($threats[0], $game->getMyHeroes()[0])<1000)){
-                echo("SPELL WIND ". $game->getOpponentBase()->getX().' '. $game->getOpponentBase()->getY()."\n");
-            }else {
-
-                echo("MOVE ". $threats[0]->getX().' '. $threats[0]->getY()."\n");
-            }
-            // error_log(var_export($game->getThreat(), true));
-
+        if ($i == 0 ){
+            $strategy = new Defend();
+            $strategy->findBestMove($hero, $game);
         }
+        else if ($i == 1 ){
+            $counterPressing = new CounterPressing();
+            if ($ennemyToCounter = $counterPressing->needCounterPressing($game)){
+                $counterPressing->CounterPressing($ennemyToCounter, $hero, $game);
+            }else{
 
-        else {
-            if ($monsters = $game->getMonsters()) {
-                echo("MOVE " . $monsters[0]->getX() ." ".$monsters[0]->getX()."\n");
-            }else {
-                $waitSpotX = $game->getMyBase()->getWaitSpotX();
-                $waitSpotY = $game->getMyBase()->getWaitSpotY();
-                echo("MOVE ". rand($waitSpotX-1000,$waitSpotX+1000)." ". rand($waitSpotY-1000,$waitSpotY+1000)."\n");
-
+                $strategy = new MaxMana();
+                $strategy->findBestPosition($hero, $game);
             }
         }
-
-        // In the first league: MOVE <x> <y> | WAIT; In later leagues: | SPELL <spellParams>;
+        else if ($i == 2 ){
+            $strategy = new Attack();
+            $strategy->findAttack($hero, $game);
+        }
+        $i++;  // In the first league: MOVE <x> <y> | WAIT; In later leagues: | SPELL <spellParams>;
     }
+        
+
 }
+

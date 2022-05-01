@@ -16,14 +16,13 @@ class Base {
     private $mana;
 
     // $mana: Ignore in the first league; Spend ten mana to cast a spell
-    private $waitSpotX;
-    private $waitSpotY;
+    private $waitSpot;
 
     public function __construct ($baseX, $baseY ){
         $this->baseX = $baseX;
         $this->baseY = $baseY;
-        $this->waitSpotX = $baseX == 0 ? "6000" : "11000";
-        $this->waitSpotY = $baseX == 0 ? "4000" : "4800";
+        $this->waitSpot['X'] = $baseX == 0 ? "1400" : "16000";
+        $this->waitSpot['Y'] = $baseX == 0 ? "1500" : "7000";
 
     }
 

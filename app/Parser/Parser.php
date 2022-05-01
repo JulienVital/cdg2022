@@ -1,6 +1,7 @@
 <?php
 namespace app\Parser;
 
+use app\Board\Unit\Hero;
 use app\Board\Unit\Unit;
 use app\Game\Game;
 
@@ -23,18 +24,24 @@ class Parser{
         $heroes = [];
         $monsters = [];
         $threat = [];
+        $ennemyHeroes = [];
         foreach($units as $unit){
             switch ($unit->getType()) {
                 case 0:
                     $unit->setMyBaseDist(CalcDist::getDist($unit, $game->getMyBase()));
-                    $monster[]= $unit;
+                    $monsters[]= $unit;
                     
                     if ($unit->getThreatFor() == 1){
                         $threat[] = $unit;
                     }
                     break;
                 case 1:
-                    $heroes[]= $unit;
+                    $heroes[]= new Hero($unit);
+
+                    break;
+                case 2:
+                    $unit->setMyBaseDist(CalcDist::getDist($unit, $game->getMyBase()));
+                    $ennemyHeroes[]= new Hero($unit);
 
                     break;
                 default:
@@ -44,6 +51,7 @@ class Parser{
         }
         
         $game->setMyHeroes($heroes);
+        $game->setEnnemyHeroes($ennemyHeroes);
         $game->setMonsters($monsters);
         $game->setThreat($threat);
         // error_log(var_export($game->getThreat(), true));

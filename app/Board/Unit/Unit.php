@@ -5,6 +5,8 @@ class Unit{
 
         private $myBaseDist; 
         private $distMyheroes; 
+        private $distMyFarmer; 
+
         public function __construct(
 
             // $id: Unique identifier
@@ -248,6 +250,60 @@ class Unit{
         public function setDistMyheroes($distMyheroes): self
         {
                 $this->distMyheroes = $distMyheroes;
+
+                return $this;
+        }
+
+            /**
+             * Get the value of shieldLife
+             */
+            public function getShieldLife()
+            {
+                        return $this->shieldLife;
+            }
+
+            /**
+             * Set the value of shieldLife
+             */
+            public function setShieldLife($shieldLife): self
+            {
+                        $this->shieldLife = $shieldLife;
+
+                        return $this;
+            }
+
+            /**
+             * Get the value of isControlled
+             */
+            public function getIsControlled()
+            {
+                        return $this->isControlled;
+            }
+
+            /**
+             * Set the value of isControlled
+             */
+            public function setIsControlled($isControlled): self
+            {
+                        $this->isControlled = $isControlled;
+
+                        return $this;
+            }
+
+        /**
+         * Get the value of distMyFarmer
+         */
+        public function getDistMyFarmer()
+        {
+                return $this->distMyFarmer;
+        }
+
+        /**
+         * Set the value of distMyFarmer
+         */
+        public function setDistMyFarmer($distMyFarmer): self
+        {
+                $this->distMyFarmer = $distMyFarmer;
 
                 return $this;
         }

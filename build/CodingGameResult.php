@@ -1,12 +1,49 @@
 <?php
-// Last compile time: 29/04/22 20:43 
+// Last compile time: 02/05/22 0:13 
 
+
+
+class Hero extends Unit{
+
+    public function __construct($unit){
+        parent::__construct(
+            $unit->getId(),
+            $unit->getType(), 
+            $unit->getX(), 
+            $unit->getY(),
+            $unit->getShieldLife(), 
+            $unit->getIsControlled(), 
+            $unit->getHealth(), 
+            $unit->getVx(),
+            $unit->getVy(), 
+            $unit->getNearBase(), 
+            $unit->getThreatFor());
+    }
+    
+    public function move($x, $y, $debug = ''){
+        echo("MOVE ". $x.' '. $y." $debug\n");
+    }
+
+    public function control($unit, $x, $y){
+        echo("SPELL CONTROL ".$unit->getId(). " ". $x.' '. $y."\n");
+    }
+    
+    public function wind( $x, $y){
+        echo("SPELL WIND ". $x.' '. $y."\n");
+    }
+    public function shield( Unit $unit){
+        echo("SPELL SHIELD ". $unit->getId() ."\n");
+    }
+
+}
 
 
 class Unit{
 
         private $myBaseDist; 
         private $distMyheroes; 
+        private $distMyFarmer; 
+
         public function __construct(
 
             // $id: Unique identifier
@@ -253,6 +290,60 @@ class Unit{
 
                 return $this;
         }
+
+            /**
+             * Get the value of shieldLife
+             */
+            public function getShieldLife()
+            {
+                        return $this->shieldLife;
+            }
+
+            /**
+             * Set the value of shieldLife
+             */
+            public function setShieldLife($shieldLife): self
+            {
+                        $this->shieldLife = $shieldLife;
+
+                        return $this;
+            }
+
+            /**
+             * Get the value of isControlled
+             */
+            public function getIsControlled()
+            {
+                        return $this->isControlled;
+            }
+
+            /**
+             * Set the value of isControlled
+             */
+            public function setIsControlled($isControlled): self
+            {
+                        $this->isControlled = $isControlled;
+
+                        return $this;
+            }
+
+        /**
+         * Get the value of distMyFarmer
+         */
+        public function getDistMyFarmer()
+        {
+                return $this->distMyFarmer;
+        }
+
+        /**
+         * Set the value of distMyFarmer
+         */
+        public function setDistMyFarmer($distMyFarmer): self
+        {
+                $this->distMyFarmer = $distMyFarmer;
+
+                return $this;
+        }
     }
 
 
@@ -271,14 +362,13 @@ class Base {
     private $mana;
 
     // $mana: Ignore in the first league; Spend ten mana to cast a spell
-    private $waitSpotX;
-    private $waitSpotY;
+    private $waitSpot;
 
     public function __construct ($baseX, $baseY ){
         $this->baseX = $baseX;
         $this->baseY = $baseY;
-        $this->waitSpotX = $baseX == 0 ? "6000" : "11000";
-        $this->waitSpotY = $baseX == 0 ? "4000" : "4800";
+        $this->waitSpot['X'] = $baseX == 0 ? "1400" : "16000";
+        $this->waitSpot['Y'] = $baseX == 0 ? "1500" : "7000";
 
     }
 
@@ -410,6 +500,8 @@ class Game {
 
     private $myHeroes;
     
+    private $ennemyHeroes;
+    
     private $monsters;
     
     private $threat;
@@ -441,30 +533,6 @@ class Game {
         return $threat;
     }
 
-    public function sortByclosest(){
-        $monsters = $this->monsters;
-        $customSort = function($monster1, $monster2) {
-            $monster1X = abs($this->myHeroes[0]->getX() - $monster1->getX() ); //4140
-            $monster1Y = abs($this->myHeroes[0]->getY() - $monster1->getY() ); //3844
-            $monster1->setDistMyheroes(sqrt($monster1X*$monster1X + $monster1Y*$monster1Y));
-
-
-            
-            
-            $monster2X = abs($this->myHeroes[0]->getX() - $monster2->getX() );
-            $monster2Y = abs($this->myHeroes[0]->getY() - $monster2->getY() );
-            $monster2Dist = sqrt($monster2X*$monster2X + $monster2Y*$monster2Y);
-            $monster2->setDistMyheroes(sqrt($monster2X*$monster2X + $monster2Y*$monster2Y));
-
-            if ($monster1->getDistMyheroes() === $monster2->getDistMyheroes()) {
-                return 0;
-            }
-            return $monster1->getDistMyheroes() < $monster2->getDistMyheroes() ? -1 : 1;
-        };
-        usort($monsters,$customSort);
-        $this->setMonsters($monsters);
-    }
- 
     /**
      * Get the value of myBase
      */
@@ -553,6 +621,24 @@ class Game {
         $this->threat = $this->sortThreat($threat);
         return $this;
     }
+
+    /**
+     * Get the value of ennemyHeroes
+     */
+    public function getEnnemyHeroes()
+    {
+        return $this->ennemyHeroes;
+    }
+
+    /**
+     * Set the value of ennemyHeroes
+     */
+    public function setEnnemyHeroes($ennemyHeroes): self
+    {
+        $this->ennemyHeroes = $ennemyHeroes;
+
+        return $this;
+    }
 }
 
 
@@ -572,6 +658,22 @@ class Data{
     public $heroesPerPlayer ;
     public $units =[] ;
 }
+
+
+class GetSpiderInRadius{
+
+    static function get($unit , $radius, $monsters){
+        $monstersInRadius = [];
+        $calcDist = new CalcDist();
+        foreach ($monsters as $monster){
+            if ($calcDist->getDist($monster, $unit) < $radius){
+                $monstersInRadius[]= $monster;
+            }
+        }
+        return $monstersInRadius;
+    }
+}
+
 
 
 
@@ -596,18 +698,24 @@ class Parser{
         $heroes = [];
         $monsters = [];
         $threat = [];
+        $ennemyHeroes = [];
         foreach($units as $unit){
             switch ($unit->getType()) {
                 case 0:
                     $unit->setMyBaseDist(CalcDist::getDist($unit, $game->getMyBase()));
-                    $monster[]= $unit;
+                    $monsters[]= $unit;
                     
                     if ($unit->getThreatFor() == 1){
                         $threat[] = $unit;
                     }
                     break;
                 case 1:
-                    $heroes[]= $unit;
+                    $heroes[]= new Hero($unit);
+
+                    break;
+                case 2:
+                    $unit->setMyBaseDist(CalcDist::getDist($unit, $game->getMyBase()));
+                    $ennemyHeroes[]= new Hero($unit);
 
                     break;
                 default:
@@ -617,12 +725,373 @@ class Parser{
         }
         
         $game->setMyHeroes($heroes);
+        $game->setEnnemyHeroes($ennemyHeroes);
         $game->setMonsters($monsters);
         $game->setThreat($threat);
         // error_log(var_export($game->getThreat(), true));
     }
 
 }  
+
+
+
+
+
+
+
+
+class Attack{
+
+    public function findAttack(Hero $hero, Game $game){
+        $this->game= $game;
+        $monsters = $game->getMonsters();
+        $monstersInRadius = GetSpiderInRadius::get($hero, 2200, $monsters);
+        $calcDist = new CalcDist();
+        if ($monstersInRadius){
+            $opponentBase = $game->getOpponentBase();
+            foreach ($monstersInRadius as $monster){
+                if ($monster->getThreatFor() != 2 && $game->getMyBase()->getMana() > 40 && $monster->getHealth()>8 && $calcDist->getDist($monster,$opponentBase) < 10000){
+                    $monster->setThreatFor(2);
+                    $hero->control($monster, $opponentBase->getX(),$opponentBase->getY());
+                    return;
+                }
+            }
+        }
+        $calcDist = new CalcDist();
+        $ennemyBase = $this->game->getOpponentBase();
+
+        if ($calcDist->getDist($hero,$ennemyBase) > 9000){
+
+            $this->goToFarmNearOpponentBase($hero);
+            return;
+        }
+        $strategie = new MaxMana();
+        $strategie->findBestPositionAtck($hero, $game);
+        return;
+    }
+    private function goToFarmNearOpponentBase($hero){
+        $ennemyBase = $this->game->getOpponentBase();
+        if ($ennemyBase->getX()==0){
+
+            $hero->move(rand(2500,6300), rand(0,8800));
+            return;
+
+        }
+        $hero->move(rand(10000,15700), rand(0,8800));
+        return;
+        
+    }
+}
+
+
+
+
+
+
+
+
+class CounterPressing{
+    private $calcDist;
+    public function __construct()
+    {
+        $this->calcDist = new CalcDist();
+    }
+
+    public function needCounterPressing(Game $game){
+        $enemies = $game->getEnnemyHeroes();
+        foreach ($enemies as $ennemy){
+            $dist = $this->calcDist->getDist($ennemy, $game->getMyBase());
+            if ($dist < 8000){
+                return $ennemy;
+            }
+        }
+        return false;
+    }
+    public function CounterPressing(Hero $ennemy, Hero $myHero, Game $game){
+        $calcDist = new CalcDist();
+        $mybase = $game->getMyBase();
+        $opponentBase = $game->getOpponentBase();
+        if ( $myHero->getShieldLife()==0){
+            $myHero->shield($myHero);
+            return;
+        }
+        $monsters = $game->getMonsters();
+        $monstersInRadius = GetSpiderInRadius::get($game->getMyBase(),6200,$monsters);
+        if (count($monstersInRadius) > 3){
+            $strategy = new Defend();
+            $strategy->findBestMove($myHero, $game);
+
+            return;
+        }
+
+        if ($calcDist->getDist($ennemy, $mybase) < $calcDist->getDist($myHero, $mybase)){
+            
+            $myHero->move($ennemy->getX(),$ennemy->getY() );
+            return;
+        }
+        $monstersInRadius = GetSpiderInRadius::get($ennemy,2200,$monsters);
+        if ($monstersInRadius && $mybase->getMana() >= 20){
+            $myHero->wind( $opponentBase->getX(),$opponentBase->getY());
+            return;
+        }
+        $strategy = new Attack();
+        $strategy->findAttack($myHero, $game);
+        return;
+        // $myHero->move($ennemy->getX(),$ennemy->getY() );
+        // foreach ($monstersInRadius as $monster){
+        //     if ($monster->getThreatFor() != 2 && $game->getMyBase()->getMana() > 40 && $monster->getHealth()>10){
+        //         $monster->setThreatFor(2);
+        //         $myHero->control($monster, $opponentBase->getX(),$opponentBase->getY());
+        //         return;
+        //     }
+        //     $myHero->move($monster->getX(),$monster->getY() );
+        //     return;
+        // }
+    }
+}
+
+
+
+
+
+class Defend{
+
+    public $game;
+
+    public function findBestMove($hero, $game){
+                    // Write an action using echo(). DON'T FORGET THE TRAILING \n
+            // To debug: error_log(var_export($var, true)); (equivalent to var_dump)
+            $this->game = $game;
+            $this->hero = $hero;
+            $pressing = new CounterPressing();
+            if ($ennemy = $pressing->needCounterPressing($this->game)){
+                error_log(var_export('defend with pressing', true));
+
+                $mybase = $game->getMybase();
+                $calcDist = new CalcDist();
+                if ($calcDist->getDist($mybase, $ennemy) < $calcDist->getDist($mybase, $hero) && $calcDist->getDist($mybase, $hero) < 4000){
+
+                    if ( $hero->getShieldLife()==0 && $mybase->getMana() > 10){
+                        echo("SPELL WIND ". $this->game->getOpponentBase()->getX().' '. $this->game->getOpponentBase()->getY()."\n");
+                        return;
+                    }
+                    $this->goSafeSpot();
+                    return;
+                }
+
+            }
+
+            if (!empty($threats = $game->getThreat())){
+                $this->bestMoveIfThreats($threats, $hero);
+                return;
+            }
+
+            else {
+                $this->bestMoveIfNoThreats();
+                return;
+            }
+    }
+    public function bestMoveIfThreats($threats, $hero){
+        if ($threats[0]->getMyBaseDist()  < 5000 && (CalcDist::getDist($threats[0], $hero)<1200)&& $threats[0]->getShieldLife()==0){
+            echo("SPELL WIND ". $this->game->getOpponentBase()->getX().' '. $this->game->getOpponentBase()->getY()."\n");
+        }else {
+            $pressing = new CounterPressing();
+            if ($ennemy = $pressing->needCounterPressing($this->game)){
+                $calcDist = new CalcDist();
+                if ($hero->getShieldLife()==0 && $calcDist->getDist($ennemy, $hero) < 2500){
+                    $hero->shield($hero);
+                    return;
+                }
+                if ($threats[0]->getMyBaseDist() < 5000 ){
+                    $hero->move($threats[0]->getX(),$threats[0]->getY(),' Attack near Threat');
+                    return;
+                }
+            }
+
+
+            $hero->move($threats[0]->getX(),$threats[0]->getY(),' ');
+
+            return;
+
+        }
+        
+    }
+    public function bestMoveIfNoThreats(){
+        $game = $this->game;
+
+        if ($monsters = $game->getMonsters()) {
+            $calcDist =new CalcDist();
+            if ($calcDist->getDist($monsters[0], $game->getMyBase()) < 8000){
+
+                echo("MOVE " . $monsters[0]->getX() ." ".$monsters[0]->getX()." \n");
+                return;
+            }
+        }
+        $this->goSafeSpot();
+        return;
+
+        
+    }
+
+    public function goSafeSpot(){
+        $waitSpotX = $this->game->getMyBase()->getWaitSpot()['X'];
+        $waitSpotY = $this->game->getMyBase()->getWaitSpot()['Y'];
+        $this->hero->move(rand($waitSpotX-1000,$waitSpotX+1000), rand($waitSpotY-1000,$waitSpotY+1000), 'safeSpot');
+        return;        
+    }
+
+    public function getThreats(){
+        return $this->game->getThreat();
+        
+    }
+    
+}
+
+
+
+
+
+
+class MaxMana{
+    private $midX = 8815;  
+    private $midY = 4500;
+    private $calcDist ;
+    private $game ;
+    
+    public function __construct(){
+        $this->calcDist = new CalcDist();
+    }
+    public function findBestPosition($unit, Game $game){
+        $this->game = $game;
+        $this->unit = $unit;
+        if ($monsters = $this->getMonsters()){
+
+            $monsters = GetSpiderInRadius::get($unit,1500, $monsters);
+
+            
+            foreach($monsters as $monster){
+                if ($monster->getThreatFor() != 2){
+
+                    $unit->move($monster->getX(),$monster->getY());
+                    return;
+                }
+            }
+        }
+        
+        $this->goTomiddle();
+        return;
+    }
+    public function findBestPositionAtck($unit, Game $game){
+        $this->game = $game;
+        $this->unit = $unit;
+        if ($monsters = $this->getMonsters()){
+            foreach($monsters as $monster){
+                if ($monster->getThreatFor() != 2){
+
+                    $unit->move($monster->getX(),$monster->getY());
+                    return;
+                }
+            }
+        }
+        
+        $this->goTomiddle();
+        return;
+    }
+
+    private function goTomiddle(){
+
+        $this->unit->move(rand($this->midX-2500,$this->midX+2500), rand($this->midY-2500,$this->midY+2500));
+        return;
+    }
+    
+
+    private function getMonsters(){
+
+        if ($monsters = $this->getThreat()){
+            return $monsters;            
+
+        }
+        if ($monsters = $this->getMonstersWithoutTheath()){
+            return $monsters;            
+
+        }
+        
+
+    }
+    private function getMonstersWithoutTheath(){
+
+        if ($monsters = $this->game->getMonsters()){
+            $monsters = array_merge(array(), $monsters);
+            foreach ($monsters as $key => $monster){
+                if ($monster->getMyBaseDist() <5500 ){
+                    unset($monsters[$key]);
+                } else {
+
+                    $monster->setDistMyFarmer($this->calcDist->getDist($monster, $this->unit));
+                }
+            }
+            $customSort = function($monster1, $monster2) {
+                
+                if ($monster1->getDistMyFarmer() === $monster2->getDistMyFarmer()) {
+                    return 0;
+                }
+                return $monster1->getDistMyFarmer() < $monster2->getDistMyFarmer() ? -1 : 1;
+            };
+            usort($monsters,$customSort);
+
+            return $monsters;
+            
+
+        }
+            return ;
+
+    }
+    private function getThreat(){
+
+        if ($monsters = $this->game->getThreat()){
+            return $this->sortMonsters($monsters);
+        }
+        return;
+    }
+
+    private function sortMonsters($monsters){
+
+            foreach ($monsters as $key => $monster){
+                if ($monster->getMyBaseDist() <5500 ){
+                    unset($monsters[$key]);
+                } else {
+
+                    $monster->setDistMyFarmer($this->calcDist->getDist($monster, $this->unit));
+                }
+            }
+            $customSort = function($monster1, $monster2) {
+                
+                if ($monster1->getDistMyFarmer() === $monster2->getDistMyFarmer()) {
+                    return 0;
+                }
+                return $monster1->getDistMyFarmer() < $monster2->getDistMyFarmer() ? -1 : 1;
+            };
+            usort($monsters,$customSort);
+
+            return $monsters;
+            
+
+    }
+    
+}
+
+
+
+
+class Strategy{
+
+    public function MaxMana(Unit $unit){
+        
+    }
+}
+
+
+
 
 
 
@@ -684,35 +1153,31 @@ while (TRUE)
         
     }
     $game->updateGame($data);
-    $game->sortByclosest();
     // error_log(var_export($game->getThreat(), true));
-    for ($i = 0; $i < $heroesPerPlayer; $i++)
+    $i = 0;
+    foreach ($game->getMyHeroes() as $hero)
     {
-        error_log(var_export($game->getMyHeroes()[0], true));
-        // Write an action using echo(). DON'T FORGET THE TRAILING \n
-        // To debug: error_log(var_export($var, true)); (equivalent to var_dump)
-        if (!empty($threats = $game->getThreat())){
-            if ($threats[0]->getMyBaseDist()  < 1500 && (CalcDist::getDist($threats[0], $game->getMyHeroes()[0])<1000)){
-                echo("SPELL WIND ". $game->getOpponentBase()->getX().' '. $game->getOpponentBase()->getY()."\n");
-            }else {
-
-                echo("MOVE ". $threats[0]->getX().' '. $threats[0]->getY()."\n");
-            }
-            // error_log(var_export($game->getThreat(), true));
-
+        if ($i == 0 ){
+            $strategy = new Defend();
+            $strategy->findBestMove($hero, $game);
         }
+        else if ($i == 1 ){
+            $counterPressing = new CounterPressing();
+            if ($ennemyToCounter = $counterPressing->needCounterPressing($game)){
+                $counterPressing->CounterPressing($ennemyToCounter, $hero, $game);
+            }else{
 
-        else {
-            if ($monsters = $game->getMonsters()) {
-                echo("MOVE " . $monsters[0]->getX() ." ".$monsters[0]->getX()."\n");
-            }else {
-                $waitSpotX = $game->getMyBase()->getWaitSpotX();
-                $waitSpotY = $game->getMyBase()->getWaitSpotY();
-                echo("MOVE ". rand($waitSpotX-1000,$waitSpotX+1000)." ". rand($waitSpotY-1000,$waitSpotY+1000)."\n");
-
+                $strategy = new MaxMana();
+                $strategy->findBestPosition($hero, $game);
             }
         }
-
-        // In the first league: MOVE <x> <y> | WAIT; In later leagues: | SPELL <spellParams>;
+        else if ($i == 2 ){
+            $strategy = new Attack();
+            $strategy->findAttack($hero, $game);
+        }
+        $i++;  // In the first league: MOVE <x> <y> | WAIT; In later leagues: | SPELL <spellParams>;
     }
+        
+
 }
+
